@@ -705,7 +705,7 @@ function deleteLoadout(idx){
   outs.splice(idx,1); save(); refreshTackleBox(); toast('Loadout removed');
 }
 
-function esc(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}function setPage(id){activePage=id;if(data.mode!=='water')lastDockPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));renderNav();FishAudio.play('button')}function setSeason(id){data.activeSeason=id;save();toast('Season changed to '+seasonDisplayName(currentSeason()||{id}))}function currentSeason(){return data.seasons.find(s=>s.id===data.activeSeason)||data.seasons[0]}function seasonDisplayName(s){return (s?.name||s?.id||'Season')+(s?.archived?' ✓ Archived':'')}function setMode(m){if(m==='water'){lastDockPage=activePage||lastDockPage||'boathouse';activePage='boathouse'}else{activePage=lastDockPage||'boathouse'}data.mode=m;try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){} render();FishAudio.play('sonar');toast(m==='water'?'Water Mode engaged':'Dock Mode engaged')}function seasonSessions(){return data.sessions.filter(s=>s.season===data.activeSeason)}function activeSession(){return data.sessions.find(s=>s.active&&s.season===data.activeSeason)||seasonSessions()[0]}function viewedLivewellSession(){const active=activeSession();if(!viewedLivewellSessionId)viewedLivewellSessionId=active?.id;return seasonSessions().find(s=>s.id===viewedLivewellSessionId)||active||seasonSessions()[0]}function openLivewell(id){viewedLivewellSessionId=id||activeSession()?.id;setPage('livewell');renderLivewell();FishAudio.play('sonar');toast(id?'Past livewell opened':'Today’s livewell opened')}function catchesForSession(id){return data.catches.filter(c=>c.sessionId===id)}function seasonCatches(){const ids=new Set(seasonSessions().map(s=>s.id));return data.catches.filter(c=>ids.has(c.sessionId))}function sessionFor(id){return data.sessions.find(s=>s.id===id)||{}}function groupCount(arr,fn){return arr.reduce((a,x)=>{const k=fn(x)||'Unknown';a[k]=(a[k]||0)+1;return a},{})}function topEntries(o,n=6){return Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n)}function biggest(c=seasonCatches()){return c.slice().sort((a,b)=>(+b.length||0)-(+a.length||0))[0]}function avg(c=seasonCatches()){return c.length?(c.reduce((a,x)=>a+(+x.length||0),0)/c.length).toFixed(1):0}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}function setPage(id){activePage=id;if(data.mode!=='water')lastDockPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));renderNav();FishAudio.play('button')}function setSeason(id){data.activeSeason=id;save();if(window.FishSync){FishSync.touchProfile();FishSync.scheduleSync();}toast('Season changed to '+seasonDisplayName(currentSeason()||{id}))}function currentSeason(){return data.seasons.find(s=>s.id===data.activeSeason)||data.seasons[0]}function seasonDisplayName(s){return (s?.name||s?.id||'Season')+(s?.archived?' ✓ Archived':'')}function setMode(m){if(m==='water'){lastDockPage=activePage||lastDockPage||'boathouse';activePage='boathouse'}else{activePage=lastDockPage||'boathouse'}data.mode=m;try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){} if(window.FishSync){FishSync.touchProfile();FishSync.scheduleSync();} render();FishAudio.play('sonar');toast(m==='water'?'Water Mode engaged':'Dock Mode engaged')}function seasonSessions(){return data.sessions.filter(s=>s.season===data.activeSeason)}function activeSession(){return data.sessions.find(s=>s.active&&s.season===data.activeSeason)||seasonSessions()[0]}function viewedLivewellSession(){const active=activeSession();if(!viewedLivewellSessionId)viewedLivewellSessionId=active?.id;return seasonSessions().find(s=>s.id===viewedLivewellSessionId)||active||seasonSessions()[0]}function openLivewell(id){viewedLivewellSessionId=id||activeSession()?.id;setPage('livewell');renderLivewell();FishAudio.play('sonar');toast(id?'Past livewell opened':'Today’s livewell opened')}function catchesForSession(id){return data.catches.filter(c=>c.sessionId===id)}function seasonCatches(){const ids=new Set(seasonSessions().map(s=>s.id));return data.catches.filter(c=>ids.has(c.sessionId))}function sessionFor(id){return data.sessions.find(s=>s.id===id)||{}}function groupCount(arr,fn){return arr.reduce((a,x)=>{const k=fn(x)||'Unknown';a[k]=(a[k]||0)+1;return a},{})}function topEntries(o,n=6){return Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n)}function biggest(c=seasonCatches()){return c.slice().sort((a,b)=>(+b.length||0)-(+a.length||0))[0]}function avg(c=seasonCatches()){return c.length?(c.reduce((a,x)=>a+(+x.length||0),0)/c.length).toFixed(1):0}
 
 /* PHOTO ENGINE INJECTED */
 /* ============================================================
@@ -1010,6 +1010,7 @@ function saveNewSeason(){
   data.seasons.push({id,name:val('newSeasonName')||id,archived:val('newSeasonStatus')==='archived',notes:val('newSeasonNotes')||'',created:new Date().toISOString().slice(0,10)});
   data.activeSeason=id;
   data.sessions.forEach(s=>s.active=false);
+  if(window.FishSync){FishSync.touch(data.seasons[data.seasons.length-1]);FishSync.touchProfile();FishSync.scheduleSync();}
   closeSheet();save();FishAudio.play('chapter');toast('🌅 A new season begins');
   setPage('boathouse');
 }
@@ -1026,6 +1027,7 @@ function saveSeasonRename(id){
   s.name=val('editSeasonName')||s.name||s.id;
   s.archived=val('editSeasonStatus')==='archived';
   s.notes=val('editSeasonNotes')||'';
+  if(window.FishSync){FishSync.touch(s);FishSync.scheduleSync();}
   closeSheet();save();toast('Season updated');
 }
 function toggleArchiveSeason(id){
@@ -1038,12 +1040,13 @@ function toggleArchiveSeason(id){
   }else{
     s.archived=false; delete s.archivedOn; toast('Season reopened');
   }
+  if(window.FishSync){FishSync.touch(s);FishSync.scheduleSync();}
   save();
 }
-function openSessionSheet(){const cs=currentSeason();if(cs?.archived&&!confirm('This season is archived. Start a trip here anyway?\n\nUsually you should start a new season first from Rig Box.'))return;document.getElementById('sheetTitle').textContent='Where are we headed?';document.getElementById('sheetSub').textContent='Trip context makes on-water logging effortless.';document.getElementById('sheetBody').innerHTML=`<div class="details"><label>Trip Title<input id="sTitle" value="Morning Mist"></label><label>Country<select id="sCountry">${data.refs.countries.map(x=>`<option ${x==='United States'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>State / Province<input id="sState" value="PA"></label><label>Water Type<select id="sWaterType">${data.refs.waterTypes.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Water<select id="sWater">${data.refs.waters.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Launch / Ramp<select id="sLaunch">${data.refs.launches.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Area<input id="sArea" value="Harrisburg islands"></label><label>Partner / Crew<input id="sPartners" value="Brian" list="partnerList"><datalist id="partnerList">${data.refs.partners.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist></label><label>Boat / Method<select id="sBoat">${data.refs.boats.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Fishing Method<select id="sMethod">${data.refs.methods.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Technique Focus<select id="sTechnique">${data.refs.techniqueFocus.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Target Species<select id="sTarget">${data.refs.species.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Weather<select id="sWeather">${data.refs.weather.map(x=>`<option ${x==='Partly cloudy'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Water Clarity<select id="sClarity">${data.refs.clarity.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Flow / Current<select id="sFlow">${data.refs.flow.map(x=>`<option ${x==='Moderate current'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Spawn / Seasonal Phase<select id="sSpawn">${data.refs.spawnPhase.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Water Temp<input id="sTemp" type="number" value="68"></label><label>Air Temp<input id="sAir" type="number" value="74"></label><label>Sky<select id="sSky">${data.refs.sky.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Moon<select id="sMoon">${data.refs.moon.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><textarea id="sNotes">A new chapter begins.</textarea></div>`;document.getElementById('sheetActions').innerHTML=`<button class="btn" onclick="closeSheet()">Cancel</button><button class="btn primary" onclick="saveSession()">Launch Trip</button>`;document.getElementById('sheet').classList.add('active')}function saveSession(){data.sessions.forEach(s=>{if(s.season===data.activeSeason)s.active=false});data.sessions.push({id:uid(),season:data.activeSeason,active:true,title:val('sTitle'),name:val('sTitle'),date:new Date().toISOString().slice(0,10),start:new Date().toTimeString().slice(0,5),end:'',country:val('sCountry'),state:val('sState')||'PA',waterType:val('sWaterType'),water:val('sWater'),launch:val('sLaunch'),area:val('sArea'),partners:val('sPartners').split(',').map(x=>x.trim()).filter(Boolean),boat:val('sBoat'),method:val('sMethod'),techniqueFocus:val('sTechnique'),weather:val('sWeather'),clarity:val('sClarity'),waterTemp:+val('sTemp')||'',airTemp:+val('sAir')||'',flow:val('sFlow'),wind:'',sky:val('sSky'),target:val('sTarget'),spawnPhase:val('sSpawn'),moon:val('sMoon'),notes:val('sNotes')});viewedLivewellSessionId=activeSession()?.id;closeSheet();save();FishAudio.play('sonar');toast('The boat is in the water')}function val(id){return document.getElementById(id)?.value||''}
+function openSessionSheet(){const cs=currentSeason();if(cs?.archived&&!confirm('This season is archived. Start a trip here anyway?\n\nUsually you should start a new season first from Rig Box.'))return;document.getElementById('sheetTitle').textContent='Where are we headed?';document.getElementById('sheetSub').textContent='Trip context makes on-water logging effortless.';document.getElementById('sheetBody').innerHTML=`<div class="details"><label>Trip Title<input id="sTitle" value="Morning Mist"></label><label>Country<select id="sCountry">${data.refs.countries.map(x=>`<option ${x==='United States'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>State / Province<input id="sState" value="PA"></label><label>Water Type<select id="sWaterType">${data.refs.waterTypes.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Water<select id="sWater">${data.refs.waters.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Launch / Ramp<select id="sLaunch">${data.refs.launches.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Area<input id="sArea" value="Harrisburg islands"></label><label>Partner / Crew<input id="sPartners" value="Brian" list="partnerList"><datalist id="partnerList">${data.refs.partners.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist></label><label>Boat / Method<select id="sBoat">${data.refs.boats.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Fishing Method<select id="sMethod">${data.refs.methods.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Technique Focus<select id="sTechnique">${data.refs.techniqueFocus.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Target Species<select id="sTarget">${data.refs.species.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Weather<select id="sWeather">${data.refs.weather.map(x=>`<option ${x==='Partly cloudy'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Water Clarity<select id="sClarity">${data.refs.clarity.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Flow / Current<select id="sFlow">${data.refs.flow.map(x=>`<option ${x==='Moderate current'?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Spawn / Seasonal Phase<select id="sSpawn">${data.refs.spawnPhase.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Water Temp<input id="sTemp" type="number" value="68"></label><label>Air Temp<input id="sAir" type="number" value="74"></label><label>Sky<select id="sSky">${data.refs.sky.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Moon<select id="sMoon">${data.refs.moon.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><textarea id="sNotes">A new chapter begins.</textarea></div>`;document.getElementById('sheetActions').innerHTML=`<button class="btn" onclick="closeSheet()">Cancel</button><button class="btn primary" onclick="saveSession()">Launch Trip</button>`;document.getElementById('sheet').classList.add('active')}function saveSession(){data.sessions.forEach(s=>{if(s.season===data.activeSeason)s.active=false});data.sessions.push({id:uid(),season:data.activeSeason,active:true,title:val('sTitle'),name:val('sTitle'),date:new Date().toISOString().slice(0,10),start:new Date().toTimeString().slice(0,5),end:'',country:val('sCountry'),state:val('sState')||'PA',waterType:val('sWaterType'),water:val('sWater'),launch:val('sLaunch'),area:val('sArea'),partners:val('sPartners').split(',').map(x=>x.trim()).filter(Boolean),boat:val('sBoat'),method:val('sMethod'),techniqueFocus:val('sTechnique'),weather:val('sWeather'),clarity:val('sClarity'),waterTemp:+val('sTemp')||'',airTemp:+val('sAir')||'',flow:val('sFlow'),wind:'',sky:val('sSky'),target:val('sTarget'),spawnPhase:val('sSpawn'),moon:val('sMoon'),notes:val('sNotes')});if(window.FishSync){FishSync.touch(data.sessions[data.sessions.length-1]);FishSync.scheduleSync();}viewedLivewellSessionId=activeSession()?.id;closeSheet();save();FishAudio.play('sonar');toast('The boat is in the water')}function val(id){return document.getElementById(id)?.value||''}
 function exportTripStory(id){const s=data.sessions.find(x=>x.id===id),text=`The River Remembers\n\n${s.title||s.name}\n${s.water} • ${s.date}\n\n${storyFor(s).replace(/<[^>]+>/g,'')}`;const b=new Blob([text],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='FishSlayR_The_River_Remembers.txt';a.click();URL.revokeObjectURL(a.href)}
 function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='FishSlayR_GenesisIII_Journal.json';a.click();URL.revokeObjectURL(a.href);FishAudio.play('button')}function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);normalizeRefs();try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){} render();toast('FishSlayR data imported')}catch(err){toast('Import failed')}};r.readAsText(f);e.target.value=''}function clearData(){if(confirm('Load the demo sample data? This will replace current local FishSlayR trips and catches.')){data=sample();normalizeRefs();viewedLivewellSessionId=null;lastCatchId=null;activePage='boathouse';lastDockPage='boathouse';save();toast('Demo data loaded')}}function clearAllTestData(){if(!confirm('Clear all fishing test data?\n\nThis removes trips, catches, livewells, campfire stories, waters visited, trophy progress, and intelligence history.\n\nYour option lists stay available.'))return;const year=String(new Date().getFullYear());const refs=JSON.parse(JSON.stringify(data.refs||DEFAULT_REFS));const sound=JSON.parse(JSON.stringify(data.sound||{enabled:false,master:.68,effects:.75,haptics:true}));photoClearAll();data={version:'Genesis III Journal Foundation',mode:data.mode||'dock',sound,activeSeason:year,seasons:[{id:year,name:year+' — New Season',archived:false}],refs,sessions:[],catches:[]};normalizeRefs();viewedLivewellSessionId=null;lastCatchId=null;catchDraft={};catchStep=0;activePage='boathouse';lastDockPage='boathouse';save();toast('🌊 The river is quiet again. Ready for another adventure.')}
-function unlock(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}function soundOn(){return data.sound?.enabled}function toggleSound(){data.sound=data.sound||{};data.sound.enabled=!data.sound.enabled;localStorage.setItem(KEY,JSON.stringify(data));renderShell();if(data.sound.enabled){unlock();FishAudio.play('sonar');toast('FishAudio enabled')}else toast('Sound muted')}function haptic(p=12){if(data.sound?.haptics&&navigator.vibrate)try{navigator.vibrate(p)}catch(e){}}function gain(v=.1){return v*(data.sound?.master??.65)*(data.sound?.effects??.75)}function tone(f=440,d=.18,type='sine',g=.12,when=0,to=null){if(!soundOn())return;const ctx=unlock();if(!ctx)return;const o=ctx.createOscillator(),gn=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,ctx.currentTime+when);if(to)o.frequency.exponentialRampToValueAtTime(Math.max(20,to),ctx.currentTime+when+d);gn.gain.setValueAtTime(.0001,ctx.currentTime+when);gn.gain.exponentialRampToValueAtTime(gain(g),ctx.currentTime+when+.02);gn.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+when+d);o.connect(gn);gn.connect(ctx.destination);o.start(ctx.currentTime+when);o.stop(ctx.currentTime+when+d+.05)}function noise(d=.18,g=.08,f=900,when=0){if(!soundOn())return;const ctx=unlock();if(!ctx)return;const len=Math.floor(ctx.sampleRate*d),buf=ctx.createBuffer(1,len,ctx.sampleRate),out=buf.getChannelData(0);for(let i=0;i<len;i++)out[i]=(Math.random()*2-1)*(1-i/len);const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gn=ctx.createGain();src.buffer=buf;filter.type='lowpass';filter.frequency.value=f;gn.gain.setValueAtTime(gain(g),ctx.currentTime+when);gn.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+when+d);src.connect(filter);filter.connect(gn);gn.connect(ctx.destination);src.start(ctx.currentTime+when);src.stop(ctx.currentTime+when+d+.04)}const FishAudio={play(name){if(!soundOn())return;({button:()=>tone(620,.08,'sine',.05),sonar:()=>{tone(260,.45,'sine',.08,0,880);tone(520,.3,'sine',.035,.1,1040)},splash:()=>{noise(.34,.11,900);tone(120,.18,'triangle',.05,0,70);noise(.13,.04,2400,.12)},pb:()=>{noise(.32,.12,1100);tone(520,.18,'sine',.08);tone(780,.18,'sine',.06,.08);tone(1040,.28,'sine',.045,.17)},chapter:()=>{tone(190,.55,'sine',.06);tone(380,.65,'triangle',.035,.08);noise(.6,.035,700,.18)},error:()=>tone(110,.18,'sawtooth',.05)}[name]||(()=>tone()))()}};
+function unlock(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}function soundOn(){return data.sound?.enabled}function toggleSound(){data.sound=data.sound||{};data.sound.enabled=!data.sound.enabled;localStorage.setItem(KEY,JSON.stringify(data));if(window.FishSync){FishSync.touchProfile();FishSync.scheduleSync();}renderShell();if(data.sound.enabled){unlock();FishAudio.play('sonar');toast('FishAudio enabled')}else toast('Sound muted')}function haptic(p=12){if(data.sound?.haptics&&navigator.vibrate)try{navigator.vibrate(p)}catch(e){}}function gain(v=.1){return v*(data.sound?.master??.65)*(data.sound?.effects??.75)}function tone(f=440,d=.18,type='sine',g=.12,when=0,to=null){if(!soundOn())return;const ctx=unlock();if(!ctx)return;const o=ctx.createOscillator(),gn=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,ctx.currentTime+when);if(to)o.frequency.exponentialRampToValueAtTime(Math.max(20,to),ctx.currentTime+when+d);gn.gain.setValueAtTime(.0001,ctx.currentTime+when);gn.gain.exponentialRampToValueAtTime(gain(g),ctx.currentTime+when+.02);gn.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+when+d);o.connect(gn);gn.connect(ctx.destination);o.start(ctx.currentTime+when);o.stop(ctx.currentTime+when+d+.05)}function noise(d=.18,g=.08,f=900,when=0){if(!soundOn())return;const ctx=unlock();if(!ctx)return;const len=Math.floor(ctx.sampleRate*d),buf=ctx.createBuffer(1,len,ctx.sampleRate),out=buf.getChannelData(0);for(let i=0;i<len;i++)out[i]=(Math.random()*2-1)*(1-i/len);const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gn=ctx.createGain();src.buffer=buf;filter.type='lowpass';filter.frequency.value=f;gn.gain.setValueAtTime(gain(g),ctx.currentTime+when);gn.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+when+d);src.connect(filter);filter.connect(gn);gn.connect(ctx.destination);src.start(ctx.currentTime+when);src.stop(ctx.currentTime+when+d+.04)}const FishAudio={play(name){if(!soundOn())return;({button:()=>tone(620,.08,'sine',.05),sonar:()=>{tone(260,.45,'sine',.08,0,880);tone(520,.3,'sine',.035,.1,1040)},splash:()=>{noise(.34,.11,900);tone(120,.18,'triangle',.05,0,70);noise(.13,.04,2400,.12)},pb:()=>{noise(.32,.12,1100);tone(520,.18,'sine',.08);tone(780,.18,'sine',.06,.08);tone(1040,.28,'sine',.045,.17)},chapter:()=>{tone(190,.55,'sine',.06);tone(380,.65,'triangle',.035,.08);noise(.6,.035,700,.18)},error:()=>tone(110,.18,'sawtooth',.05)}[name]||(()=>tone()))()}};
 function wideRipple(e){let x=innerWidth/2,y=innerHeight/2;if(e&&e.clientX){x=e.clientX;y=e.clientY}const r=document.createElement('span');r.className='ripple-ring';r.style.left=x+'px';r.style.top=y+'px';document.body.appendChild(r);const r2=r.cloneNode();r2.className='ripple-ring second';document.body.appendChild(r2);setTimeout(()=>{r.remove();r2.remove()},1400)}document.addEventListener('click',e=>{if(e.target.closest('button')){FishAudio.play('button');wideRipple(e)}});
 function toggleAudioLab(on){document.getElementById('audioLab').classList.toggle('active',on)}document.getElementById('logo').addEventListener('click',()=>{const l=document.getElementById('logo');l.classList.add('bump');setTimeout(()=>l.classList.remove('bump'),300);logoTaps++;clearTimeout(tapTimer);tapTimer=setTimeout(()=>logoTaps=0,1200);if(logoTaps>=5){logoTaps=0;toggleAudioLab(true);toast('FishAudio Lab unlocked');FishAudio.play('pb')}});
 function initWater(){const c=document.getElementById('waterCanvas'),ctx=c.getContext('2d');let w,h,t=0;function resize(){w=c.width=innerWidth*devicePixelRatio;h=c.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}addEventListener('resize',resize);resize();function loop(){t+=.006;ctx.clearRect(0,0,w,h);const W=innerWidth,H=innerHeight;for(let y=0;y<H;y+=28){ctx.beginPath();for(let x=0;x<W;x+=18){const yy=y+Math.sin(x*.012+t*2+y*.018)*8+Math.sin(x*.025+t+y*.01)*4;if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy)}ctx.strokeStyle=`rgba(125,231,255,${0.025+0.018*Math.sin(t+y*.02)})`;ctx.lineWidth=1;ctx.stroke()}requestAnimationFrame(loop)}loop()}
@@ -1197,6 +1200,7 @@ function landFish(){
   }
   const prevBig=biggest(seasonCatches())?.length||0;
   if(existing)data.catches=data.catches.map(x=>x.id===existing?obj:x);else data.catches.push(obj);
+  if(window.FishSync){FishSync.touch(obj); if(obj.hasPhoto)FishSync.markPhotoDirty(obj); FishSync.scheduleSync();}
   lastCatchId=obj.id;viewedLivewellSessionId=obj.sessionId;closeSheet();save();
   const isPB=(+obj.length||0)>prevBig && !existing;
   if(typeof landedSwim==='function') landedSwim(obj.species);
@@ -2519,6 +2523,302 @@ renderIntelligence=function(){
 window.FishSlayRRuntime=Object.freeze({version:'FishSlayR v1.2',schema:'season-trip-fish',stabilized:true,modules:['season-context','journal-shelf','intelligence-disclosure','metric-visuals','intelligence-experience','factory-reset']});
 render();
 </script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  window.sb = createClient(
+    'https://fbiwhttuivxhxpzbhsfu.supabase.co',
+    'sb_publishable_JLxegOFEGvAMi6FZ6bozNg_h2kcKpVz'
+  );
+  function mountAuthBar(){
+    const bar=document.createElement('div');bar.id='authBar';
+    bar.style.cssText='position:fixed;top:10px;right:12px;z-index:9999;display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:16px;background:rgba(2,15,27,.72);border:1px solid rgba(125,231,255,.25);backdrop-filter:blur(12px);color:#cff4ff;font:600 13px Inter,sans-serif';
+    document.body.appendChild(bar);
+    async function paint(){
+      const {data}=await window.sb.auth.getUser();const user=data&&data.user;
+      if(user){
+        bar.innerHTML=`<span style="opacity:.8">☁️ ${user.email}</span><button id="fsSyncNow" style="cursor:pointer;border:0;border-radius:12px;padding:6px 10px;background:rgba(125,231,255,.18);color:#cff4ff;font-weight:800">Sync</button><button id="fsSignOut" style="cursor:pointer;border:0;border-radius:12px;padding:6px 10px;background:rgba(255,97,120,.18);color:#ffd6dc;font-weight:800">Sign out</button>`;
+        bar.querySelector('#fsSignOut').onclick=async()=>{await window.sb.auth.signOut();paint();};
+        bar.querySelector('#fsSyncNow').onclick=()=>window.FishSync&&window.FishSync.syncNow();
+      }else{
+        bar.innerHTML=`<input id="fsEmail" placeholder="email for cloud sync" style="border:1px solid rgba(125,231,255,.25);background:rgba(2,15,27,.6);color:#fff;border-radius:12px;padding:6px 10px;width:170px"><button id="fsSignIn" style="cursor:pointer;border:0;border-radius:12px;padding:6px 10px;background:rgba(125,231,255,.22);color:#021522;font-weight:900">Send link</button>`;
+        bar.querySelector('#fsSignIn').onclick=async()=>{
+          const email=bar.querySelector('#fsEmail').value.trim();if(!email)return;
+          const {error}=await window.sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href}});
+          bar.querySelector('#fsSignIn').textContent=error?'Error':'Check email ✓';
+        };
+      }
+    }
+    paint();window.sb.auth.onAuthStateChange(()=>paint());
+  }
+  window.addEventListener('load',mountAuthBar);
+</script>
+<script>
+/* ============================================================================
+   FishSlayR ⇄ Supabase Sync Engine
+   ----------------------------------------------------------------------------
+   Offline-first. localStorage + IndexedDB stay the source of truth so the app
+   works with no connection. This module pushes local changes up and pulls
+   remote changes down whenever the device is online.
+
+   Strategy: last-write-wins by `updated_at` (right for a single-user journal
+   across multiple devices).
+
+   HOW TO LOAD: include this AFTER the Supabase client is created (see auth
+   snippet) and AFTER your main app <script> has defined `data`, `save`,
+   `render`, `photoGet`, `photoPut`, `photoDelete`, and `KEY`.
+
+   Because your app is one big non-module <script>, those are all globals on
+   window already — this file just reads them.
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  // --- guards ---------------------------------------------------------------
+  if (!window.sb) { console.warn('[sync] Supabase client (window.sb) missing'); return; }
+
+  const LAST_PULL_KEY = 'fishslayr.lastPull';
+  const PHOTO_BUCKET  = 'catch-photos';
+  let   syncing       = false;
+  let   pushTimer     = null;
+
+  // ==========================================================================
+  // DIRTY TRACKING
+  // Call FishSync.touch(record) whenever you create/edit/delete a record,
+  // right before save(). It stamps updated_at and marks the record dirty.
+  // ==========================================================================
+  function nowISO() { return new Date().toISOString(); }
+
+  function touch(rec) {
+    if (!rec) return rec;
+    rec.updated_at = nowISO();
+    rec._dirty = true;
+    return rec;
+  }
+
+  // Mark the singleton profile (refs/sound/mode/activeSeason) dirty.
+  function touchProfile() {
+    data._profileDirty = true;
+    data._profileUpdatedAt = nowISO();
+  }
+
+  // ==========================================================================
+  // MAPPERS  (local record  ->  table row)
+  // The whole record goes into `data`; a few columns are promoted for queries.
+  // ==========================================================================
+  function seasonRow(s) {
+    return { id: s.id, name: s.name ?? null, archived: !!s.archived,
+             deleted: !!s.deleted, updated_at: s.updated_at || nowISO(), data: stripMeta(s) };
+  }
+  function sessionRow(s) {
+    return { id: s.id, season: s.season ?? null, active: !!s.active,
+             deleted: !!s.deleted, updated_at: s.updated_at || nowISO(), data: stripMeta(s) };
+  }
+  function catchRow(c) {
+    return { id: c.id, session_id: c.sessionId ?? null, has_photo: !!c.hasPhoto,
+             deleted: !!c.deleted, updated_at: c.updated_at || nowISO(), data: stripMeta(c) };
+  }
+  // Don't persist local-only sync flags into the jsonb payload.
+  function stripMeta(rec) {
+    const { _dirty, ...rest } = rec;
+    return rest;
+  }
+
+  // ==========================================================================
+  // LOCAL UPSERTS  (table row  ->  local record)  — used on PULL
+  // ==========================================================================
+  function upsertLocalArray(arrName, incoming, keyField) {
+    if (!Array.isArray(data[arrName])) data[arrName] = [];
+    const arr = data[arrName];
+    const idx = arr.findIndex(x => x[keyField] === incoming[keyField]);
+    if (incoming.deleted) {
+      if (idx >= 0) arr.splice(idx, 1);          // remote tombstone → drop locally
+    } else if (idx >= 0) {
+      arr[idx] = incoming;
+    } else {
+      arr.push(incoming);
+    }
+  }
+
+  // ==========================================================================
+  // PUSH
+  // ==========================================================================
+  async function pushTable(tableName, arrName, mapFn) {
+    const dirty = (data[arrName] || []).filter(r => r._dirty);
+    if (!dirty.length) return;
+    const rows = dirty.map(mapFn);
+    const { error } = await window.sb.from(tableName).upsert(rows);
+    if (error) { console.warn(`[sync] push ${tableName} failed`, error); return; } // keep dirty → retry later
+    dirty.forEach(r => { delete r._dirty; });                                       // confirmed → clear flag
+  }
+
+  async function pushProfile() {
+    if (!data._profileDirty) return;
+    const row = {
+      version: data.version ?? null,
+      mode: data.mode ?? null,
+      active_season: data.activeSeason ?? null,
+      sound: data.sound ?? null,
+      refs: data.refs ?? null,
+      journal: data.journal ?? null,
+      updated_at: data._profileUpdatedAt || nowISO()
+    };
+    const { error } = await window.sb.from('profiles').upsert(row, { onConflict: 'user_id' });
+    if (error) { console.warn('[sync] push profile failed', error); return; }
+    delete data._profileDirty;
+  }
+
+  // Upload any dirty catch photos from IndexedDB → Supabase Storage.
+  async function pushPhotos(userId) {
+    const withPhotos = (data.catches || []).filter(c => c.hasPhoto && c._photoDirty);
+    for (const c of withPhotos) {
+      try {
+        const blob = await window.photoGet(c.id);
+        if (!blob) { delete c._photoDirty; continue; }
+        const path = `${userId}/${c.id}.jpg`;
+        const { error } = await window.sb.storage.from(PHOTO_BUCKET)
+          .upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' });
+        if (error) { console.warn('[sync] photo upload failed', c.id, error); continue; }
+        delete c._photoDirty;                    // confirmed
+      } catch (e) { console.warn('[sync] photo push error', c.id, e); }
+    }
+  }
+
+  // ==========================================================================
+  // PULL
+  // ==========================================================================
+  async function pullTable(tableName, arrName, keyField, mapRowToLocal) {
+    const since = localStorage.getItem(LAST_PULL_KEY) || '1970-01-01T00:00:00.000Z';
+    const { data: rows, error } = await window.sb
+      .from(tableName).select('*').gt('updated_at', since);
+    if (error) { console.warn(`[sync] pull ${tableName} failed`, error); return; }
+    for (const row of (rows || [])) {
+      const incoming = mapRowToLocal(row);
+      const local = (data[arrName] || []).find(x => x[keyField] === incoming[keyField]);
+      // server wins only if strictly newer (last-write-wins)
+      if (!local || (incoming.updated_at || '') > (local.updated_at || '')) {
+        upsertLocalArray(arrName, incoming, keyField);
+      }
+    }
+  }
+
+  // row.data holds the full original object; re-attach sync columns onto it.
+  function rowToLocal(row, extra) {
+    return Object.assign({}, row.data, {
+      updated_at: row.updated_at,
+      deleted: row.deleted
+    }, extra || {});
+  }
+
+  async function pullProfile() {
+    const { data: rows, error } = await window.sb.from('profiles').select('*').limit(1);
+    if (error || !rows || !rows.length) return;
+    const p = rows[0];
+    // Only overwrite if remote profile is newer than our last pull marker.
+    const since = localStorage.getItem(LAST_PULL_KEY) || '1970-01-01T00:00:00.000Z';
+    if ((p.updated_at || '') <= since) return;
+    if (p.refs)          data.refs = p.refs;
+    if (p.sound)         data.sound = p.sound;
+    if (p.journal)       data.journal = p.journal;
+    if (p.active_season) data.activeSeason = p.active_season;
+    if (p.mode)          data.mode = p.mode;
+  }
+
+  // Pull any photos we're missing locally (has_photo on server, absent in IDB).
+  async function pullPhotos(userId) {
+    const needing = (data.catches || []).filter(c => c.hasPhoto);
+    for (const c of needing) {
+      try {
+        const existing = await window.photoGet(c.id);
+        if (existing) continue;
+        const path = `${userId}/${c.id}.jpg`;
+        const { data: blob, error } = await window.sb.storage.from(PHOTO_BUCKET).download(path);
+        if (error || !blob) continue;
+        await window.photoPut(c.id, blob);
+      } catch (e) { console.warn('[sync] photo pull error', c.id, e); }
+    }
+  }
+
+  // ==========================================================================
+  // ORCHESTRATION
+  // ==========================================================================
+  async function syncNow() {
+    if (syncing) return;
+    if (!navigator.onLine) return;
+    const { data: auth } = await window.sb.auth.getUser();
+    const user = auth && auth.user;
+    if (!user) return;                       // signed out → local-only, no sync
+
+    syncing = true;
+    try {
+      // PUSH first so our local edits aren't clobbered by an older pull marker.
+      await pushProfile();
+      await pushTable('seasons',  'seasons',  seasonRow);
+      await pushTable('sessions', 'sessions', sessionRow);
+      await pushTable('catches',  'catches',  catchRow);
+      await pushPhotos(user.id);
+
+      // PULL remote changes since last successful pull.
+      await pullProfile();
+      await pullTable('seasons',  'seasons',  'id', r => rowToLocal(r));
+      await pullTable('sessions', 'sessions', 'id', r => rowToLocal(r));
+      await pullTable('catches',  'catches',  'id', r => rowToLocal(r, { sessionId: r.session_id, hasPhoto: r.has_photo }));
+      await pullPhotos(user.id);
+
+      localStorage.setItem(LAST_PULL_KEY, nowISO());
+      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+      if (typeof render === 'function') render();
+    } catch (e) {
+      console.warn('[sync] syncNow error', e);
+    } finally {
+      syncing = false;
+    }
+  }
+
+  // Debounced push — call after save() without hammering the network.
+  function scheduleSync(ms = 2000) {
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(syncNow, ms);
+  }
+
+  // ==========================================================================
+  // ONE-TIME MIGRATION: seed the server from an existing local device.
+  // Runs when the user has local data but has never pulled before.
+  // ==========================================================================
+  async function migrateIfNeeded() {
+    if (localStorage.getItem(LAST_PULL_KEY)) return;       // already synced before
+    const { data: auth } = await window.sb.auth.getUser();
+    if (!auth || !auth.user) return;
+    const stamp = nowISO();
+    (data.seasons  || []).forEach(s => { s.updated_at = stamp; s._dirty = true; });
+    (data.sessions || []).forEach(s => { s.updated_at = stamp; s._dirty = true; });
+    (data.catches  || []).forEach(c => { c.updated_at = stamp; c._dirty = true; if (c.hasPhoto) c._photoDirty = true; });
+    touchProfile();
+    await syncNow();
+  }
+
+  // ==========================================================================
+  // WIRE-UP
+  // ==========================================================================
+  window.addEventListener('online', () => syncNow());
+  // periodic safety net while the app is open
+  setInterval(() => { if (navigator.onLine) syncNow(); }, 60000);
+
+  // Kick off after auth settles.
+  window.sb.auth.onAuthStateChange((_evt, session) => {
+    if (session && session.user) {
+      migrateIfNeeded().then(syncNow);
+    }
+  });
+  // Also try once on load in case a session is already restored.
+  window.addEventListener('load', () => { setTimeout(() => { migrateIfNeeded().then(syncNow); }, 800); });
+
+  // Public surface used by the app's mutation code.
+  window.FishSync = { touch, touchProfile, markPhotoDirty(c){ if(c) c._photoDirty = true; },
+                      syncNow, scheduleSync };
+})();
+
+</script>
+
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

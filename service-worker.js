@@ -8,7 +8,8 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './icon-512-maskable.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  'https://esm.sh/@supabase/supabase-js@2'
 ];
 
 // Install: pre-cache the static app shell (no HTML), activate immediately.
@@ -37,6 +38,16 @@ const isHTML = (req) =>
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // Supabase API + storage: always go to network, never serve stale cache.
+  // The sync engine handles offline by queuing dirty records.
+  const host = new URL(req.url).hostname;
+  if (host.endsWith('.supabase.co')) {
+    event.respondWith(
+      fetch(req).catch(() => new Response('', { status: 503 }))
+    );
+    return;
+  }
 
   if (isHTML(req)) {
     event.respondWith(

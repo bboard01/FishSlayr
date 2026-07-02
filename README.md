@@ -1,7 +1,6 @@
 # FishSlayR — PWA Setup
 
-This folder is a complete, installable Progressive Web App. Once it's live on GitHub Pages,
-you can install it on your phone's home screen and it runs like a real app, offline.
+This folder is a complete, installable Progressive Web App. You can install it on your phone's home screen and it runs like a real app, offline.
 
 ## Files in this folder
 - `index.html` — the whole app (this is what GitHub Pages serves by default)

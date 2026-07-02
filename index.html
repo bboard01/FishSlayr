@@ -2327,9 +2327,9 @@ var FishSlayRHooks=window.FishSlayRHooks||{};
        visual.innerHTML='<div class="metric-dots">'+Array.from({length:slots},function(_,i){return '<i class="metric-dot '+(i<productive?'productive':'quiet')+'"></i>'}).join('')+'</div><div class="metric-scale-label"><span>'+sum.tripCount+' productive</span><span>'+sum.scopedTrips+' total trips</span></div>';
        visual.setAttribute('aria-label',sum.tripCount+' productive trips out of '+sum.scopedTrips);
      }else if(title==='Fish / Trip'){
-       visual.innerHTML=scaleVisual(sum.fpt,bestTrip,'Average '+sum.fpt.toFixed(1),'Best trip '+bestTrip).replace(/^<div class="metric-visual">|</div>$/g,'');
+       visual.innerHTML=scaleVisual(sum.fpt,bestTrip,'Average '+sum.fpt.toFixed(1),'Best trip '+bestTrip).replace(/^<div class="metric-visual">|<\/div>$/g,'');
      }else if(title==='Fish / Hour'){
-       if(sum.hours&&fastest)visual.innerHTML=scaleVisual(sum.fph,fastest,'Average '+sum.fph.toFixed(1),'Fastest '+fastest.toFixed(1)).replace(/^<div class="metric-visual">|</div>$/g,'');
+       if(sum.hours&&fastest)visual.innerHTML=scaleVisual(sum.fph,fastest,'Average '+sum.fph.toFixed(1),'Fastest '+fastest.toFixed(1)).replace(/^<div class="metric-visual">|<\/div>$/g,'');
        else visual.innerHTML='<div class="metric-scale-label"><span>Log trip end times</span><span>Rate pending</span></div>';
      }else if(title==='Success Rate'){
        visual.innerHTML='<div class="metric-ring-wrap"><div class="metric-ring" style="--p:'+sum.success+'"></div><div class="metric-ring-note">'+sum.tripCount+' productive<br>of '+sum.scopedTrips+' trips</div></div>';
